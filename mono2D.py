@@ -35,13 +35,13 @@ from torch.nn.modules import Module
 #
 #------------------------------------------------------------------------
 
-class PhaseAsymmono2D(Module):
+class Mono2D(Module):
     def __init__(
         self, nscale: int = 1, sigmaonf: float = None, wls: list = None, trainable: bool = True,
         return_phase: bool = True, return_phase_asym: bool = False, return_ori: bool = False,
         return_input: bool = False
         ):
-        super(PhaseAsymmono2D, self).__init__()
+        super(Mono2D, self).__init__()
 
         # Hyperparameters - these can be tuned
         self.return_phase = return_phase
