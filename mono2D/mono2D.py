@@ -69,7 +69,7 @@ class Mono2D(Module):
         # that quickly falls to zero at the boundaries. Cut-off frequency (normalized)
         # should be between 0 and 0.5 according to Nyquist theorem.
         # The larger the value of g, the sharper the transition to zero.
-        self.cut_off = 0.4
+        self.cut_off = 0.5
         self.g = 10
         # This implementation does not apply any noise compensation, hence, noise compensation
         # threshold is set to zero.
