@@ -39,7 +39,7 @@ class Mono2D(Module):
     def __init__(
         self, nscale: int = 1, sigmaonf: float = None, wls: list = None, trainable: bool = True,
         return_phase: bool = True, return_phase_asym: bool = False, return_ori: bool = False,
-        return_input: bool = False
+        return_input: bool = False, img_size: tuple = (512, 512)
         ):
         super(Mono2D, self).__init__()
 
@@ -77,24 +77,26 @@ class Mono2D(Module):
         # Set a small value used throughout the layer to avoid division by zero
         self.episilon = 0.0001
 
+        # Precompute quadrature and low-pass filters
+        H, lgf = self.get_filters(*img_size)
+        self.__H = nn.Parameter(H, requires_grad=False)
+        self.__lgf = nn.Parameter(lgf, requires_grad=False)
+        del H, lgf
 
     def forward(self, x):
         _, _, rows, cols = x.size()
         # Transform the input image to frequency domain
         IM = torch.fft.fft2(x).to(self.get_device())
 
-        # Obtain quadrature filters and low-pass filter
-        H, lgf = self.get_filters(rows, cols)
-
         # Bandpassed image in the frequency domain
-        IMF = IM * lgf
+        IMF = IM * self.__lgf
 
         # Bandpassed image in the spatial domain
         f = torch.fft.ifft2(IMF).real
 
         # Bandpassed monogenic filtering, real part of h contains convolution result with h1, 
         # imaginary part contains convolution result with h2
-        h = torch.fft.ifft2(IMF * H)
+        h = torch.fft.ifft2(IMF * self.__H)
         h1 = h.real
         h2 = h.imag
         h_Amp2 = h1 ** 2 + h2 ** 2          # Amplitude of the bandpassed monogenic signal
@@ -132,7 +134,9 @@ class Mono2D(Module):
         if self.return_phase_asym:
             out.append(phase_asym)
 
-        return torch.stack(out, dim=1)    
+        out = torch.stack(out, dim=1)
+
+        return out
 
     def get_filters(self, rows, cols):
         u1, u2, radius = self.mesh_range((rows, cols))
